@@ -28,9 +28,9 @@ default_settings = {
 
 default_warn = ("user.mention, you have received your "
                 "warning #warn.count! At warn.limit warnings you "
-                "will be kicked!")
+                "will be banned!")
 default_max = 3
-default_kick = ("After warn.limit warnings, user.name has been kicked.")
+default_ban = ("After warn.limit warnings, user.name has been banned.")
 
 
 class Warn:
@@ -58,20 +58,20 @@ class Warn:
             except:
                 msg = default_warn
             try:
-                kick = self.riceCog2[server.id]["kick_message"]
+                ban = self.riceCog2[server.id]["ban_message"]
             except:
-                kick = default_kick
+                ban = default_ban
             try:
                 _max = self.riceCog2[server.id]["max"]
             except:
                 _max = default_max
             message = "```\n"
             message += "Warn Message - {}\n"
-            message += "Kick Message - {}\n"
+            message += "Ban Message - {}\n"
             message += "Warn Limit   - {}\n"
             message += "```"
             await self.bot.say(message.format(msg,
-                                              kick,
+                                              ban,
                                               _max))
 
     @_warnset.command(no_pm=True, pass_context=True, manage_server=True)
@@ -111,7 +111,7 @@ class Warn:
         await self.bot.say(msg)
 
     @_warnset.command(no_pm=True, pass_context=True)
-    @checks.admin_or_permissions(kick_members=True, manage_server=True)
+    @checks.admin_or_permissions(ban_members=True, manage_server=True)
     async def max(self, ctx, limit: int):
         server = ctx.message.server
 
@@ -121,25 +121,25 @@ class Warn:
         await self.bot.say("Warn limit is now: \n{}".format(limit))
 
     @_warnset.command(no_pm=True, pass_context=True)
-    @checks.admin_or_permissions(kick_members=True, manage_server=True)
-    async def kick(self, ctx, *, msg=None):
-        """Set the kick message.
+    @checks.admin_or_permissions(ban_members=True, manage_server=True)
+    async def ban(self, ctx, *, msg=None):
+        """Set the ban message.
 
         To get a full list of information, use **warnset message** without any parameters."""
         if not msg:
-            await self.bot.say("```Set the kick message.\n\n"
+            await self.bot.say("```Set the ban message.\n\n"
                                "To get a full list of information, use "
                                "**warnset message** without any parameters.```")
             return
         server = ctx.message.server
 
-        self.riceCog2[server.id]["kick_message"] = msg
+        self.riceCog2[server.id]["ban_message"] = msg
         dataIO.save_json(self.warning_settings,
                          self.riceCog2)
         await self.bot.say("Kick message is now: \n{}".format(msg))
 
     @_warnset.command(no_pm=True, pass_context=True)
-    @checks.admin_or_permissions(kick_members=True, manage_server=True)
+    @checks.admin_or_permissions(ban_members=True, manage_server=True)
     async def reset(self, ctx):
         server = ctx.message.server
         author = ctx.message.author
@@ -152,14 +152,14 @@ class Warn:
                                               timeout=15.0)
         if msg.content.lower().strip() == "yes":
             self.riceCog2[server.id]["warn_message"] = default_warn
-            self.riceCog2[server.id]["kick_message"] = default_kick
+            self.riceCog2[server.id]["ban_message"] = default_ban
             self.riceCog2[server.id]["max"] = default_max
         else:
             await self.bot.say("Nevermind then.")
             return
 
     @_warnset.command(no_pm=True, pass_context=True)
-    @checks.admin_or_permissions(kick_members=True, manage_server=True)
+    @checks.admin_or_permissions(ban_members=True, manage_server=True)
     async def message(self, ctx, *, msg=None):
         """Set the warning message
 
@@ -172,10 +172,10 @@ class Warn:
         Example:
 
         **You, user.mention, have received Warning warn.count. After warn.limit,
-        you will be kicked.**
+        you will be banned.**
 
         You can set it either for every server.
-        To set the kick message, use *warnset kick*
+        To set the ban message, use *warnset ban*
         """
         if not msg:
             await self.bot.say("```Set the warning message\n\n"
@@ -189,10 +189,10 @@ class Warn:
 
                                "**You, user.mention, have received Warning "
                                "warn.count. After warn.limit, you will be "
-                               "kicked.**\n\n"
+                               "banned.**\n\n"
 
                                "You can set it either for every server.\n"
-                               "To set the kick message, use *warnset kick*\n```")
+                               "To set the ban message, use *warnset ban*\n```")
             return
 
         server = ctx.message.server
@@ -232,16 +232,15 @@ class Warn:
         dataIO.save_json("data/mod/settings.json", self.settings)
         
     @commands.command(no_pm=True, pass_context=True)
-    @checks.admin_or_permissions(kick_members=True)
+    @checks.admin_or_permissions(ban_members=True)
     async def warn(self, ctx, user: discord.Member, *, reason=None):
-        """Warns the user - At 3 warnings the user gets kicked
-
+        """Warns the user - At 3 warnings the user gets banned
         Thank you, 26, for the modlog"""
         server = ctx.message.server
         author = ctx.message.author
         channel = ctx.message.channel
 
-        can_kick = channel.permissions_for(server.me).kick_members
+        can_ban = channel.permissions_for(server.me).ban_members
         can_role = channel.permissions_for(server.me).manage_roles    
         
         if author == user:
@@ -253,16 +252,16 @@ class Warn:
                                "not higher than the user in the role "
                                "hierarchy.")
             return
-        if can_kick:
+        if can_ban:
            pass
         else:
             await self.bot.say("Sorry, I can't warn this user.\n"
-                               "I am missing the `kick_members` permission")
+                               "I am missing the `ban_members` permission")
             return
 
         if server.id not in self.riceCog2:
             msg = default_warn
-            kick = default_kick
+            ban = default_ban
             _max = default_max
 
         if server.id not in self.riceCog:
@@ -278,9 +277,9 @@ class Warn:
         except:
             msg = default_warn
         try:
-            kick = self.riceCog2[server.id]["kick_message"]
+            ban = self.riceCog2[server.id]["ban_message"]
         except:
-            kick = default_kick
+            ban = default_ban
         try:
             _max = self.riceCog2[server.id]["max"]
         except:
@@ -342,7 +341,7 @@ class Warn:
                              self.riceCog)
             log = None
         else:
-            msg = kick
+            msg = ban
             msg = await self.filter_message(msg=msg,
                                             user=user,
                                             count=count,
@@ -363,7 +362,7 @@ class Warn:
             self.riceCog[server.id][user.id].update({"Count": count})
             dataIO.save_json(self.profile,
                              self.riceCog)
-            log = "KICK"
+            log = "BAN"
 
         if 'poop' in self.riceCog2[server.id] and can_role:
             if self.riceCog2[server.id]['poop'] == True:
@@ -392,17 +391,17 @@ class Warn:
                                mod=author,
                                user=user,
                                reason=reason)
-            await self.bot.kick(user)
+            await self.bot.ban(user)
         elif log:
             await cog.new_case(server=server,
                                action=log,
                                user=user,
                                mod=author,
                                reason="No reason provided yet.")
-            await self.bot.kick(user)
+            await self.bot.ban(user)
 
     @commands.command(no_pm=True, pass_context=True)
-    @checks.admin_or_permissions(kick_members=True)
+    @checks.admin_or_permissions(ban_members=True)
     async def clean(self, ctx, user: discord.Member):
         author = ctx.message.author
         server = author.server
